@@ -1,195 +1,210 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles, HelpCircle, Eye, MessageSquare, Compass, X } from "lucide-react";
+import {
+  Sparkles,
+  ArrowRight,
+  HelpCircle,
+  Clock,
+  Layers,
+  Compass,
+  X,
+  ChevronRight,
+  BookOpen,
+} from "lucide-react";
 import { CardView } from "@/components/CardView";
 import { CardRepository } from "@/repositories/cardRepository";
+import { SessionStore } from "@/services/sessionStore";
+import { ReflectionRecord } from "@/types/session";
 
-export default function HomePage() {
+const QUICK_THEMES = [
+  "最近有点累",
+  "关系里有些话想说",
+  "我正面临一个选择",
+  "想更了解自己",
+  "不设主题，随意探索",
+];
+
+export default function MobileAppHomePage() {
+  const router = useRouter();
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [recentRecord, setRecentRecord] = useState<ReflectionRecord | null>(null);
 
-  // 展示一张有艺术感的主卡与错位卡片
-  const sampleImageCard = CardRepository.getImageCardById("img_01"); // 窗边的人
-  const sampleImageCard2 = CardRepository.getImageCardById("img_05"); // 木桥
-  const sampleWordCard = CardRepository.getWordCardById("word_03"); // 等待
+  // 展示一张极具艺术美感的特色水彩卡
+  const sampleCard = CardRepository.getImageCardById("img_01");
+  const sampleWord = CardRepository.getWordCardById("word_03"); // 等待
+
+  useEffect(() => {
+    const list = SessionStore.getSavedReflections();
+    if (list.length > 0) {
+      setRecentRecord(list[0]);
+    }
+  }, []);
+
+  const handleStartWithTheme = (theme: string) => {
+    const s = SessionStore.createSession(theme);
+    router.push(`/session/${s.id}`);
+  };
 
   return (
-    <div className="flex-1 flex flex-col justify-between max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-16">
-      {/* 头部留白与主视觉区域 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center my-auto">
-        {/* 左侧文案层级 */}
-        <div className="lg:col-span-7 space-y-8 text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sage/60 border border-sage-dark/40 text-charcoal-800 text-xs tracking-wider">
-            <span className="w-1.5 h-1.5 rounded-full bg-insight" />
-            <span>原创图像联想与感受梳理</span>
-          </div>
-
-          <div className="space-y-4">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-normal text-charcoal-900 leading-[1.25] tracking-tight">
-              从一张图，<br />
-              <span className="text-charcoal-800">开始听见自己。</span>
-            </h1>
-            <p className="text-base sm:text-lg text-charcoal-600 font-sans leading-relaxed max-w-lg">
-              不急着找到答案。先看看，这张图让你想起什么。
-            </p>
-          </div>
-
-          {/* 交互按钮组 */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
-            <Link
-              href="/explore"
-              className="inline-flex justify-center items-center gap-2.5 px-8 py-3.5 rounded-full bg-charcoal-900 text-[#F6F3EC] hover:bg-insight transition-all shadow-md text-base font-medium group"
-            >
-              <span>开始一次探索</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-
-            <button
-              onClick={() => setShowHowItWorks(true)}
-              className="inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-full border border-charcoal-200 text-charcoal-700 hover:bg-[#ECE6D8]/60 transition-colors text-base"
-            >
-              <HelpCircle className="w-4 h-4 text-charcoal-400" />
-              <span>看看怎么玩</span>
-            </button>
-          </div>
-
-          <div className="pt-2 text-xs text-charcoal-400 flex items-center gap-2">
-            <span className="w-1 h-1 rounded-full bg-charcoal-400" />
-            <span>无须注册 · 离线私密存储 · 纯粹的自我对话</span>
-          </div>
+    <div className="flex-1 flex flex-col justify-between px-5 pt-4 pb-4 space-y-6">
+      {/* 顶部温和问候与说明 */}
+      <div className="space-y-1.5 pt-1">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-serif text-insight uppercase tracking-widest font-medium">
+            DAILY MINDFULNESS
+          </span>
+          <button
+            onClick={() => setShowHowItWorks(true)}
+            className="inline-flex items-center gap-1 text-[11px] text-charcoal-400 hover:text-charcoal-700 active:scale-95 transition-all p-1"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>怎么玩</span>
+          </button>
         </div>
 
-        {/* 右侧艺术叠卡视觉 */}
-        <div className="lg:col-span-5 flex justify-center items-center relative py-6">
-          <div className="relative w-64 h-[350px] sm:w-72 sm:h-[390px]">
-            {/* 底层斜置图卡 */}
-            <motion.div
-              initial={{ rotate: -8, x: -20, opacity: 0.8 }}
-              animate={{ rotate: -7, x: -16 }}
-              className="absolute inset-0 pointer-events-none transform origin-bottom-left"
-            >
-              <div className="w-full h-full rounded-2xl bg-[#EDE7DA] border border-[#DDD5C3] shadow-soft" />
-            </motion.div>
+        <h1 className="text-2xl font-serif text-charcoal-900 leading-snug">
+          从一张图，<br />
+          开始听见自己。
+        </h1>
+        <p className="text-xs text-charcoal-500 font-sans">
+          不急着找答案。看看眼前的意境让你联想到什么。
+        </p>
+      </div>
 
-            {/* 中层错位词语卡 */}
-            <motion.div
-              initial={{ rotate: 10, x: 26, y: -10 }}
-              animate={{ rotate: 9, x: 22, y: -8 }}
-              className="absolute inset-0 pointer-events-none transform origin-bottom-right"
-            >
-              <CardView
-                card={sampleWordCard}
-                type="word"
-                isFlipped={true}
-                className="w-full h-full shadow-soft opacity-90"
-              />
-            </motion.div>
+      {/* 核心主卡交互区（微互动卡片叠放） */}
+      <div className="flex-1 flex flex-col items-center justify-center py-2 relative my-auto">
+        <Link href="/explore" className="relative block group select-none active:scale-95 transition-transform">
+          {/* 底层错位阴影卡 */}
+          <div className="absolute inset-0 w-52 h-[277px] rounded-2xl bg-[#E8DFC9] rotate-6 translate-x-3 translate-y-2 opacity-60 shadow-xs pointer-events-none" />
+          <div className="absolute inset-0 w-52 h-[277px] rounded-2xl bg-[#DFD5BD] -rotate-3 -translate-x-2 translate-y-1 opacity-70 shadow-xs pointer-events-none" />
 
-            {/* 顶层主图卡 */}
-            <motion.div
-              initial={{ y: 10, scale: 0.98 }}
-              animate={{ y: 0, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="relative z-10 w-full h-full"
+          {/* 顶层主水彩卡 */}
+          <div className="relative w-52 h-[277px] rounded-2xl shadow-[0_16px_36px_-6px_rgba(40,36,30,0.18)]">
+            <CardView
+              card={sampleCard}
+              type="image"
+              isFlipped={true}
+              interactive={false}
+              className="w-full h-full pointer-events-none"
+            />
+            {/* 点击提示气泡 */}
+            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-charcoal-900/90 backdrop-blur-sm text-[#F6F3EC] rounded-full text-[10px] font-sans tracking-wider flex items-center gap-1 shadow-sm whitespace-nowrap">
+              <Sparkles className="w-3 h-3 text-insight-light" />
+              <span>轻触开启今日探索</span>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* 快速选择主题横滑小胶囊 */}
+      <div className="space-y-2">
+        <span className="text-[11px] font-medium text-charcoal-400 block px-0.5">
+          选择贴近当下的心境：
+        </span>
+        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1 -mx-5 px-5">
+          {QUICK_THEMES.map((theme) => (
+            <button
+              key={theme}
+              onClick={() => handleStartWithTheme(theme)}
+              className="px-3.5 py-2 rounded-full bg-white border border-[#E5DEC9] text-xs text-charcoal-700 whitespace-nowrap active:scale-95 active:bg-[#ECE6D8] transition-all shadow-2xs font-sans shrink-0"
             >
+              {theme}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 最近一次探索记录小卡片（若有） */}
+      {recentRecord && (
+        <Link
+          href={`/reflection/${recentRecord.sessionId || recentRecord.id}`}
+          className="p-3.5 rounded-2xl bg-white border border-[#E8E2D5] active:scale-[0.98] transition-transform flex items-center justify-between shadow-2xs"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-13 rounded-lg overflow-hidden shrink-0 border border-[#E0D8C7]">
               <CardView
-                card={sampleImageCard}
+                card={recentRecord.imageCard}
                 type="image"
                 isFlipped={true}
-                className="w-full h-full shadow-card hover:shadow-floating transition-shadow"
+                size="sm"
+                className="w-full h-full pointer-events-none"
               />
-            </motion.div>
+            </div>
+            <div className="min-w-0">
+              <div className="text-[10px] text-charcoal-400 font-serif flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span>上次探索</span>
+              </div>
+              <p className="text-xs font-medium text-charcoal-900 truncate">
+                {recentRecord.topic}
+              </p>
+              <p className="text-[11px] text-charcoal-500 truncate italic">
+                “{recentRecord.userExpressions.attraction}”
+              </p>
+            </div>
           </div>
-        </div>
+          <ChevronRight className="w-4 h-4 text-charcoal-300 shrink-0 ml-2" />
+        </Link>
+      )}
+
+      {/* 底部原生主操作按钮 */}
+      <div className="pt-1">
+        <Link
+          href="/explore"
+          className="w-full py-3.5 rounded-full bg-charcoal-900 text-[#F6F3EC] active:scale-[0.98] transition-transform text-sm font-medium flex items-center justify-center gap-2 shadow-md hover:bg-insight"
+        >
+          <Sparkles className="w-4 h-4 text-insight-light" />
+          <span>开始一次探索</span>
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+        <p className="text-center text-[10px] text-charcoal-400 pt-2">
+          离线私密存储 · 纯粹的自我对话 · 不作心理定性
+        </p>
       </div>
 
-      {/* 下方简洁三步介绍 */}
-      <div className="mt-16 pt-12 border-t border-[#E8E2D5] grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-5 rounded-2xl bg-[#FAF8F4] border border-[#EBE5D6] space-y-2">
-          <div className="w-8 h-8 rounded-full bg-sage flex items-center justify-center text-charcoal-800 text-sm font-serif">
-            1
-          </div>
-          <h3 className="text-base font-medium text-charcoal-800 flex items-center gap-2">
-            <Eye className="w-4 h-4 text-insight" />
-            看见一张图
-          </h3>
-          <p className="text-sm text-charcoal-600 leading-relaxed">
-            从 24 张意境画面中随心抽取，留意第一眼吸引你的细节。
-          </p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-[#FAF8F4] border border-[#EBE5D6] space-y-2">
-          <div className="w-8 h-8 rounded-full bg-sage flex items-center justify-center text-charcoal-800 text-sm font-serif">
-            2
-          </div>
-          <h3 className="text-base font-medium text-charcoal-800 flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-insight" />
-            说出你的感受
-          </h3>
-          <p className="text-sm text-charcoal-600 leading-relaxed">
-            结合抽中的词语卡，跟随中立温和的追问，自由表达你的联想。
-          </p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-[#FAF8F4] border border-[#EBE5D6] space-y-2">
-          <div className="w-8 h-8 rounded-full bg-sage flex items-center justify-center text-charcoal-800 text-sm font-serif">
-            3
-          </div>
-          <h3 className="text-base font-medium text-charcoal-800 flex items-center gap-2">
-            <Compass className="w-4 h-4 text-insight" />
-            找到一个小方向
-          </h3>
-          <p className="text-sm text-charcoal-600 leading-relaxed">
-            不评判、不对号入座。整理自己的原话，带走一个微小的行动。
-          </p>
-        </div>
-      </div>
-
-      {/* 玩法弹窗 */}
+      {/* 怎么玩原生底部抽屉（Bottom Sheet） */}
       {showHowItWorks && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-900/40 backdrop-blur-sm">
-          <div className="bg-[#FAF8F4] border border-[#E5DEC9] max-w-lg w-full rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
-            <button
-              onClick={() => setShowHowItWorks(false)}
-              className="absolute top-5 right-5 p-2 rounded-full hover:bg-cream-200 text-charcoal-600 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-charcoal-900/50 backdrop-blur-xs">
+          <div className="bg-[#FAF8F4] w-full max-w-md rounded-t-3xl p-6 space-y-4 shadow-2xl animate-in slide-in-from-bottom duration-200 border-t border-[#E5DEC9]">
+            <div className="w-10 h-1 rounded-full bg-charcoal-300 mx-auto -mt-2" />
 
-            <div className="space-y-2">
-              <span className="text-xs font-serif tracking-widest text-insight uppercase">
-                GUIDE & PRINCIPLE
-              </span>
-              <h2 className="text-2xl font-serif text-charcoal-900">
-                映见的设计理念与玩法
-              </h2>
-            </div>
-
-            <div className="space-y-4 text-sm text-charcoal-600 leading-relaxed">
-              <p>
-                <strong>这不是占卜，也不是性格测试：</strong>
-                我们不预测未来，也不给出所谓“权威结论”。每一张卡牌只是一个倒影，映出的是你心里本来就有的感受。
-              </p>
-              <p>
-                <strong>你的感觉永远是对的：</strong>
-                同一张画，有人看见宁静，有人看见孤独。卡牌没有任何预设的标准答案，请相信你第一时间的直接体会。
-              </p>
-              <p>
-                <strong>随心表达，随时跳过：</strong>
-                所有的提问都允许你修改、反驳或直接跳过。整个过程完全属于你自己。
-              </p>
-            </div>
-
-            <div className="pt-2 flex justify-end">
+            <div className="flex items-center justify-between pt-1">
+              <h3 className="text-lg font-serif text-charcoal-900">
+                玩法与陪伴理念
+              </h3>
               <button
                 onClick={() => setShowHowItWorks(false)}
-                className="px-6 py-2.5 rounded-full bg-charcoal-900 text-[#F6F3EC] hover:bg-insight transition-colors text-sm font-medium"
+                className="p-1 rounded-full text-charcoal-400 hover:text-charcoal-700"
               >
-                我了解了
+                <X className="w-5 h-5" />
               </button>
             </div>
+
+            <div className="space-y-3 text-xs text-charcoal-600 leading-relaxed font-sans">
+              <p>
+                <strong>1. 绝非占卜预测：</strong>
+                我们不预测未来，也不给出所谓“权威结论”。卡牌只是一面镜子，映出的是你心里原本就有的真实体会。
+              </p>
+              <p>
+                <strong>2. 你的感受永远是对的：</strong>
+                同一张画，有人看见宁静，有人看见孤单。相信你第一时间的直接联想。
+              </p>
+              <p>
+                <strong>3. 完全自主掌控：</strong>
+                所有追问随时可以修改、否认或直接跳过，过程全程保存在本地。
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowHowItWorks(false)}
+              className="w-full py-3 rounded-full bg-charcoal-900 text-white text-xs font-medium"
+            >
+              我知道了
+            </button>
           </div>
         </div>
       )}

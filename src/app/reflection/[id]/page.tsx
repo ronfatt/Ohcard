@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowLeft,
   Share2,
   Bookmark,
   BookmarkCheck,
@@ -22,7 +21,7 @@ import { SessionStore } from "@/services/sessionStore";
 import { ExplorationSession, ReflectionRecord } from "@/types/session";
 import { activeReflectionProvider, ReflectionSynthesis } from "@/services/reflectionService";
 
-export default function ReflectionPage() {
+export default function MobileReflectionPage() {
   const params = useParams();
   const router = useRouter();
   const sessionId = params?.id as string;
@@ -42,7 +41,6 @@ export default function ReflectionPage() {
   useEffect(() => {
     if (!sessionId) return;
 
-    // 优先读取已保存记录
     const saved = SessionStore.getSavedReflectionById(sessionId);
     const s = SessionStore.getSession(sessionId);
 
@@ -74,14 +72,12 @@ export default function ReflectionPage() {
     }
 
     if (!s) {
-      // 容错重定向
       router.push("/");
       return;
     }
 
     setSession(s);
 
-    // 生成回顾内容
     const generate = async () => {
       const syn: ReflectionSynthesis = await activeReflectionProvider.generateReflection(s);
       setActionOptions(syn.smallActionSuggestions);
@@ -121,7 +117,6 @@ export default function ReflectionPage() {
     }
   }, [sessionId, router]);
 
-  // 保存探索记录
   const handleSaveRecord = () => {
     if (!reflection) return;
     const finalAction = customAction.trim() || selectedAction;
@@ -136,7 +131,6 @@ export default function ReflectionPage() {
     setIsSaved(true);
   };
 
-  // 删除当前探索
   const handleDeleteRecord = () => {
     SessionStore.deleteSavedReflection(sessionId);
     router.push("/journal");
@@ -144,8 +138,8 @@ export default function ReflectionPage() {
 
   if (!reflection || !session || !session.imageCard || !session.wordCard) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8 text-charcoal-400">
-        正在梳理你的探索回顾...
+      <div className="flex-1 flex items-center justify-center p-8 text-xs text-charcoal-400">
+        梳理探索回顾中...
       </div>
     );
   }
@@ -153,139 +147,98 @@ export default function ReflectionPage() {
   const finalActionText = customAction.trim() || selectedAction;
 
   return (
-    <div className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 space-y-10">
-      {/* 顶部导航与状态 */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/journal"
-          className="inline-flex items-center gap-1.5 text-xs text-charcoal-400 hover:text-charcoal-800 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>返回我的探索</span>
-        </Link>
+    <div className="flex-1 flex flex-col px-4 pt-2 pb-8 space-y-5">
+      {/* 顶部操作条（保存与分享） */}
+      <div className="flex items-center justify-between pb-1">
+        <div className="flex items-center gap-1.5">
+          <span className="px-2 py-0.5 rounded-full bg-sage text-[10px] text-charcoal-800">
+            {reflection.topic}
+          </span>
+        </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleSaveRecord}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium transition-all ${
+            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
               isSaved
                 ? "bg-sage text-charcoal-800 border border-sage-dark"
-                : "bg-charcoal-900 text-[#F6F3EC] hover:bg-insight"
+                : "bg-charcoal-900 text-white"
             }`}
           >
             {isSaved ? (
               <>
-                <BookmarkCheck className="w-3.5 h-3.5 text-insight" />
-                <span>已保存在本地</span>
+                <BookmarkCheck className="w-3 h-3 text-insight" />
+                <span>已存日记</span>
               </>
             ) : (
               <>
-                <Bookmark className="w-3.5 h-3.5" />
-                <span>保存本次探索</span>
+                <Bookmark className="w-3 h-3" />
+                <span>保存</span>
               </>
             )}
           </button>
 
           <button
             onClick={() => setShowShareModal(true)}
-            className="p-2 rounded-full border border-charcoal-200 text-charcoal-600 hover:bg-[#ECE6D8] transition-colors"
-            title="生成分享卡片（隐私受控）"
+            className="p-1.5 rounded-full border border-charcoal-200 text-charcoal-600 active:scale-95"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* 标题区域 */}
-      <div className="space-y-3 text-center sm:text-left">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sage/50 border border-sage-dark/40 text-xs text-charcoal-700">
-          <span>主题：{reflection.topic}</span>
-          <span>·</span>
-          <span>
-            {new Date(reflection.createdAt).toLocaleDateString("zh-CN", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </span>
-        </div>
-
-        <h1 className="text-3xl sm:text-4xl font-serif text-charcoal-900">
-          这一次，你看见了什么？
-        </h1>
-        <p className="text-sm text-charcoal-600">
-          探索的意义不在于寻找标准答案，而在于清晰地看见当下的自己。
-        </p>
-      </div>
-
-      {/* 本次卡牌展示并置 */}
-      <div className="p-6 rounded-3xl bg-white border border-[#E8E2D5] shadow-soft flex flex-col sm:flex-row items-center justify-around gap-6">
+      {/* 双卡并置展陈 */}
+      <div className="p-3.5 rounded-2xl bg-white border border-[#E8E2D5] shadow-xs flex items-center justify-around gap-3">
         <div className="flex flex-col items-center">
-          <span className="text-[11px] font-serif text-charcoal-400 mb-2 uppercase tracking-widest">
-            IMAGE CARD · 图卡
-          </span>
           <CardView
             card={reflection.imageCard}
             type="image"
             isFlipped={true}
-            className="w-36 h-48 sm:w-44 sm:h-60"
+            className="w-28 h-38 shrink-0"
           />
-          <span className="text-[11px] text-charcoal-500 pt-2 text-center max-w-[200px]">
+          <span className="text-[10px] text-charcoal-400 pt-1.5 truncate max-w-[110px]">
             {reflection.imageCard.alt}
           </span>
         </div>
 
-        <div className="hidden sm:block text-2xl font-serif text-charcoal-300">
-          +
-        </div>
+        <span className="text-xl font-serif text-charcoal-300">+</span>
 
         <div className="flex flex-col items-center">
-          <span className="text-[11px] font-serif text-charcoal-400 mb-2 uppercase tracking-widest">
-            WORD CARD · 词语卡
-          </span>
           <CardView
             card={reflection.wordCard}
             type="word"
             isFlipped={true}
-            className="w-36 h-48 sm:w-44 sm:h-60"
+            className="w-28 h-38 shrink-0"
           />
-          <span className="text-[11px] text-charcoal-500 pt-2 text-center">
-            联想词：{reflection.wordCard.word}
+          <span className="text-[10px] text-charcoal-400 pt-1.5">
+            {reflection.wordCard.word}
           </span>
         </div>
       </div>
 
-      {/* 区块 1：你的表达（明确区分：原话不作篡改） */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-insight" />
-          <h2 className="text-lg font-serif text-charcoal-900">
+      {/* 你的原话轨迹 */}
+      <div className="p-4 rounded-2xl bg-white border border-[#E8E2D5] space-y-3">
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-insight" />
+          <h3 className="text-xs font-serif text-charcoal-900 font-medium">
             你的表达记录
-          </h2>
-          <span className="text-xs text-charcoal-400">（真实记录你的原话）</span>
+          </h3>
         </div>
 
-        <div className="p-6 rounded-3xl bg-[#FAF8F4] border border-[#E8E2D5] space-y-5 text-sm">
+        <div className="space-y-2 text-xs">
           <div>
-            <span className="text-xs font-medium text-charcoal-400 block mb-1">
-              画面中最先触动你的：
-            </span>
+            <span className="text-[10px] text-charcoal-400 block">最初吸引你的：</span>
             <p className="text-charcoal-800 leading-relaxed font-sans">
-              “{reflection.userExpressions.attraction || "未填写"}”
+              “{reflection.userExpressions.attraction}”
             </p>
           </div>
 
           {reflection.userExpressions.feelings.length > 0 && (
             <div>
-              <span className="text-xs font-medium text-charcoal-400 block mb-1.5">
-                当时留意到的感受词：
-              </span>
-              <div className="flex flex-wrap gap-2">
+              <span className="text-[10px] text-charcoal-400 block mb-1">当时觉察的感受：</span>
+              <div className="flex flex-wrap gap-1">
                 {reflection.userExpressions.feelings.map((f) => (
-                  <span
-                    key={f}
-                    className="px-3 py-1 rounded-full text-xs bg-white border border-[#DFD8C4] text-charcoal-700"
-                  >
+                  <span key={f} className="px-2 py-0.5 rounded-full text-[10px] bg-cream-200 text-charcoal-700">
                     {f}
                   </span>
                 ))}
@@ -293,259 +246,193 @@ export default function ReflectionPage() {
             </div>
           )}
 
-          {reflection.userExpressions.wordCombination && (
-            <div>
-              <span className="text-xs font-medium text-charcoal-400 block mb-1">
-                融入词语「{reflection.wordCard.word}」后的感觉：
-              </span>
-              <p className="text-charcoal-800 leading-relaxed">
-                “{reflection.userExpressions.wordCombination}”
-              </p>
-            </div>
-          )}
-
-          {/* 追问问答记录 */}
           {reflection.userExpressions.dialogues.length > 0 && (
-            <div className="pt-2 border-t border-[#ECE5D6] space-y-3">
-              <span className="text-xs font-medium text-charcoal-400 block">
-                问答轨迹：
-              </span>
-              {reflection.userExpressions.dialogues.map((d, idx) => (
-                <div key={idx} className="space-y-1 bg-white/70 p-3.5 rounded-2xl border border-[#EDE7D9]">
-                  <p className="text-xs text-charcoal-500 font-serif">
-                    问：{d.question}
-                  </p>
-                  <p className="text-sm text-charcoal-800 font-medium">
-                    答：{d.answer || "（未作具体展开）"}
-                  </p>
+            <div className="pt-2 border-t border-[#F2ECE1] space-y-1.5">
+              {reflection.userExpressions.dialogues.map((d, i) => (
+                <div key={i} className="space-y-0.5">
+                  <p className="text-[10px] text-charcoal-400 font-serif">问：{d.question}</p>
+                  <p className="text-xs text-charcoal-800">答：“{d.answer}”</p>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </section>
+      </div>
 
-      {/* 区块 2：系统整理（明确区分，允许编辑） */}
-      <section className="space-y-4">
+      {/* 系统整理与回响 */}
+      <div className="p-4 rounded-2xl bg-white border border-[#E8E2D5] space-y-2.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-sage-deep" />
-            <h2 className="text-lg font-serif text-charcoal-900">
-              系统整理与回响
-            </h2>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-sage-deep" />
+            <h3 className="text-xs font-serif text-charcoal-900 font-medium">
+              系统整理
+            </h3>
           </div>
-
           <button
             onClick={() => setIsEditingSynthesis(!isEditingSynthesis)}
-            className="inline-flex items-center gap-1 text-xs text-insight hover:text-insight-hover transition-colors"
+            className="text-[11px] text-insight flex items-center gap-0.5"
           >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>{isEditingSynthesis ? "完成修改" : "修改整理内容"}</span>
+            <Edit3 className="w-3 h-3" />
+            <span>{isEditingSynthesis ? "完成" : "编辑"}</span>
           </button>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white border border-[#E8E2D5] shadow-soft space-y-4">
-          <p className="text-xs text-charcoal-400">
-            {reflection.systemSynthesis.disclaimer}
-          </p>
-
-          {isEditingSynthesis ? (
-            <textarea
-              value={editedSynthesisText}
-              onChange={(e) => setEditedSynthesisText(e.target.value)}
-              rows={6}
-              className="w-full p-4 rounded-2xl bg-[#FAF8F5] border border-insight/50 text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-insight/20 text-sm leading-relaxed"
-            />
-          ) : (
-            <div className="text-sm text-charcoal-700 leading-relaxed whitespace-pre-line font-sans">
-              {editedSynthesisText}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* 区块 3：仍想继续探索的问题 */}
-      {reflection.systemSynthesis.unresolvedQuestions.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-serif text-charcoal-700">
-            留给未来的开放性思考（无需立刻作答）
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {reflection.systemSynthesis.unresolvedQuestions.map((q, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-2xl bg-[#FAF8F4] border border-[#E8E2D5] text-xs text-charcoal-600 leading-relaxed font-sans"
-              >
-                {q}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 区块 4：一个由用户选择或编辑的小行动 */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-serif text-charcoal-900">
-          带走一个微小的行动
-        </h2>
-        <p className="text-xs text-charcoal-500">
-          探索不是为了停留在文字里。今天，给自己一件轻松、不费力的小事：
-        </p>
-
-        <div className="space-y-2">
-          {actionOptions.map((opt) => {
-            const isSelected = selectedAction === opt && !customAction.trim();
-            return (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => {
-                  setSelectedAction(opt);
-                  setCustomAction("");
-                }}
-                className={`w-full text-left p-3.5 rounded-2xl border text-xs sm:text-sm transition-all flex items-center justify-between ${
-                  isSelected
-                    ? "bg-sage/40 border-sage-deep text-charcoal-900 font-medium"
-                    : "bg-white border-[#E8E2D5] text-charcoal-700 hover:border-charcoal-300"
-                }`}
-              >
-                <span>{opt}</span>
-                {isSelected && <Check className="w-4 h-4 text-sage-deep" />}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 自定义行动 */}
-        <div className="pt-1">
-          <input
-            type="text"
-            value={customAction}
-            onChange={(e) => setCustomAction(e.target.value)}
-            placeholder="或者，写下属于你自己的小行动..."
-            className="w-full px-4 py-3 rounded-2xl bg-white border border-[#E0D8C7] text-xs sm:text-sm text-charcoal-900 focus:outline-none focus:border-insight"
+        {isEditingSynthesis ? (
+          <textarea
+            value={editedSynthesisText}
+            onChange={(e) => setEditedSynthesisText(e.target.value)}
+            rows={5}
+            className="w-full p-3 rounded-xl bg-[#FAF8F5] border border-insight/40 text-xs text-charcoal-900 leading-relaxed"
           />
-        </div>
-      </section>
+        ) : (
+          <p className="text-xs text-charcoal-700 leading-relaxed font-sans whitespace-pre-line">
+            {editedSynthesisText}
+          </p>
+        )}
+      </div>
 
-      {/* 底部功能条：保存、真人带领、再探索、删除 */}
-      <div className="pt-6 border-t border-[#E8E2D5] flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      {/* 微小行动建议 */}
+      <div className="p-4 rounded-2xl bg-white border border-[#E8E2D5] space-y-2.5">
+        <h3 className="text-xs font-serif text-charcoal-900 font-medium">
+          带走一个微小行动
+        </h3>
+
+        <div className="space-y-1.5">
+          {actionOptions.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => {
+                setSelectedAction(opt);
+                setCustomAction("");
+              }}
+              className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all flex items-center justify-between ${
+                selectedAction === opt && !customAction.trim()
+                  ? "bg-sage/40 border-sage-deep text-charcoal-900 font-medium"
+                  : "bg-white/80 border-[#E8E2D5] text-charcoal-700"
+              }`}
+            >
+              <span>{opt}</span>
+              {selectedAction === opt && !customAction.trim() && (
+                <Check className="w-3.5 h-3.5 text-sage-deep" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        <input
+          type="text"
+          value={customAction}
+          onChange={(e) => setCustomAction(e.target.value)}
+          placeholder="或自定义你的微小行动..."
+          className="w-full px-3 py-2 rounded-xl bg-[#FAF8F4] border border-[#E0D8C7] text-xs text-charcoal-900"
+        />
+      </div>
+
+      {/* 底部导航组 */}
+      <div className="space-y-2 pt-1">
+        <div className="flex gap-2">
           <Link
-            href={`/booking/guide_chen?topic=${encodeURIComponent(
-              reflection.topic
-            )}&sessionId=${reflection.sessionId}`}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-charcoal-800 text-charcoal-900 hover:bg-charcoal-900 hover:text-white transition-all text-xs font-medium"
+            href={`/booking/guide_chen?topic=${encodeURIComponent(reflection.topic)}&sessionId=${reflection.sessionId}`}
+            className="flex-1 py-3 rounded-full border border-charcoal-800 text-charcoal-900 text-xs font-medium text-center active:scale-95"
           >
-            <Users className="w-3.5 h-3.5" />
-            <span>了解真人带领者（演示）</span>
+            真人带领者（演示）
           </Link>
 
           <Link
             href="/explore"
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs text-charcoal-600 hover:text-charcoal-900 hover:bg-[#ECE6D8]/60 transition-colors"
+            className="flex-1 py-3 rounded-full bg-charcoal-900 text-white text-xs font-medium text-center active:scale-95 flex items-center justify-center gap-1"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>再探索一次</span>
+            <RotateCcw className="w-3 h-3" />
+            <span>再来一次</span>
           </Link>
         </div>
 
         <button
           onClick={() => setShowDeleteConfirm(true)}
-          className="text-xs text-charcoal-400 hover:text-red-600 transition-colors flex items-center gap-1"
+          className="w-full py-2 text-center text-[11px] text-charcoal-400 hover:text-red-500"
         >
-          <Trash2 className="w-3.5 h-3.5" />
-          <span>删除本次记录</span>
+          删除本次记录
         </button>
       </div>
 
-      {/* 分享弹窗（遵循隐私第一原则，默认不含对话原文，用户清楚可见） */}
+      {/* 分享受控抽屉 */}
       {showShareModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-900/40 backdrop-blur-sm">
-          <div className="bg-[#FAF8F4] border border-[#E5DEC9] max-w-md w-full rounded-3xl p-6 space-y-5 shadow-2xl relative">
-            <button
-              onClick={() => setShowShareModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-cream-200 text-charcoal-500"
-            >
-              <X className="w-4 h-4" />
-            </button>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-charcoal-900/50 backdrop-blur-xs">
+          <div className="bg-[#FAF8F4] w-full max-w-md rounded-t-3xl p-5 space-y-4 shadow-2xl border-t border-[#E5DEC9]">
+            <div className="w-10 h-1 rounded-full bg-charcoal-300 mx-auto -mt-1" />
 
-            <div className="space-y-1">
-              <span className="text-[11px] font-serif uppercase tracking-widest text-insight">
-                SHARE PREVIEW · 隐私受控分享
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-serif uppercase tracking-widest text-insight">
+                SHARE CARD
               </span>
-              <h3 className="text-xl font-serif text-charcoal-900">
-                分享你的探索卡片
-              </h3>
-              <p className="text-xs text-charcoal-500">
-                为保护隐私，分享内容仅包含主题、卡牌和你的微小行动，<strong>默认不包含你的私密对话原文</strong>。
-              </p>
+              <button onClick={() => setShowShareModal(false)}>
+                <X className="w-5 h-5 text-charcoal-400" />
+              </button>
             </div>
 
-            {/* 卡片预览 */}
-            <div className="p-5 rounded-2xl bg-white border border-[#E8E2D5] space-y-3 text-center">
-              <div className="text-[11px] font-serif text-insight uppercase tracking-widest">
-                映见 INSIGHT · 探索灵感
-              </div>
-              <div className="text-base font-serif text-charcoal-900">
-                主题：「{reflection.topic}」
-              </div>
-              <div className="py-2 text-xs text-charcoal-600">
-                抽中卡牌：<strong>{reflection.imageCard.alt}</strong> × 词语「<strong>{reflection.wordCard.word}</strong>」
-              </div>
-              <div className="p-3 rounded-xl bg-sage/30 text-xs text-charcoal-800">
+            <div className="p-4 rounded-xl bg-white border border-[#E8E2D5] space-y-2 text-center text-xs">
+              <p className="font-serif font-medium text-charcoal-900">
+                映见 ·「{reflection.topic}」
+              </p>
+              <p className="text-charcoal-600">
+                {reflection.imageCard.alt} × 词语「{reflection.wordCard.word}」
+              </p>
+              <div className="p-2 rounded-lg bg-sage/30 text-charcoal-800 text-[11px]">
                 今日微小行动：{finalActionText}
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={() => {
-                  const text = `【映见 INSIGHT 探索】\n主题：${reflection.topic}\n画面：${reflection.imageCard.alt}\n词语：${reflection.wordCard.word}\n微小行动：${finalActionText}`;
-                  navigator.clipboard.writeText(text);
-                  setCopiedShare(true);
-                  setTimeout(() => setCopiedShare(false), 2000);
-                }}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-charcoal-900 text-white text-xs font-medium hover:bg-insight transition-colors"
-              >
-                {copiedShare ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-sage" />
-                    <span>已复制分享文案</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>复制分享摘要</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <p className="text-[10px] text-charcoal-400 text-center">
+              保护隐私：默认不包含私密对话原文
+            </p>
+
+            <button
+              onClick={() => {
+                const text = `【映见 INSIGHT】\n主题：${reflection.topic}\n卡牌：${reflection.imageCard.alt} ×「${reflection.wordCard.word}」\n今日微小行动：${finalActionText}`;
+                navigator.clipboard.writeText(text);
+                setCopiedShare(true);
+                setTimeout(() => setCopiedShare(false), 2000);
+              }}
+              className="w-full py-3 rounded-full bg-charcoal-900 text-white text-xs font-medium flex items-center justify-center gap-1.5"
+            >
+              {copiedShare ? (
+                <>
+                  <Check className="w-3.5 h-3.5" />
+                  <span>已复制分享文本</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>复制分享摘要</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}
 
       {/* 删除确认弹窗 */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-900/40 backdrop-blur-sm">
-          <div className="bg-[#FAF8F4] border border-[#E5DEC9] max-w-sm w-full rounded-3xl p-6 space-y-4 shadow-xl">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="w-5 h-5" />
-              <h4 className="font-medium text-sm">确认删除此条记录？</h4>
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal-900/50 backdrop-blur-xs">
+          <div className="bg-[#FAF8F4] w-full max-w-xs rounded-3xl p-5 space-y-3 shadow-xl">
+            <h4 className="font-medium text-xs text-red-600 flex items-center gap-1.5">
+              <AlertTriangle className="w-4 h-4" />
+              <span>确认删除此条记录？</span>
+            </h4>
             <p className="text-xs text-charcoal-600 leading-relaxed">
-              删除后，保存在当前设备中的本条探索记录将被完全移除，无法恢复。
+              删除后，本机保存的本次探索将被移除。
             </p>
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-2 pt-1">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-xs text-charcoal-600 hover:bg-[#ECE6D8] rounded-full"
+                className="px-3.5 py-1.5 text-xs text-charcoal-600 rounded-full"
               >
                 取消
               </button>
               <button
                 onClick={handleDeleteRecord}
-                className="px-4 py-2 text-xs bg-red-600 text-white hover:bg-red-700 rounded-full font-medium"
+                className="px-4 py-1.5 text-xs bg-red-600 text-white rounded-full font-medium"
               >
                 确认删除
               </button>

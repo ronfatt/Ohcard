@@ -9,31 +9,63 @@
   --sage: #DCE6D9;
 }
 
-body {
-  background-color: var(--background);
+html, body {
+  background-color: #EFEBE1;
   color: var(--foreground);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh;
-}
-
-/* 杂志感精致细线 */
-.border-subtle {
-  border-color: #E6E0D3;
-}
-
-/* 细腻卡纸阴影 */
-.shadow-magazine {
-  box-shadow: 0 10px 30px -4px rgba(34, 34, 34, 0.05), 0 2px 8px -1px rgba(34, 34, 34, 0.03);
-}
-
-/* 适度无缝过渡 */
-* {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-/* 兼容小屏输入区滚动 */
+/* 允许文本框与输入区选中文本 */
+input, textarea, p, h1, h2, h3, h4, span.selectable {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* 兼容小屏输入区滚动，防止 iOS 聚焦放大网页 */
 textarea, input {
-  font-size: 16px; /* 防止 iOS 自动放大网页 */
+  font-size: 16px !important;
+}
+
+/* 移动端安全区域适配 */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+/* 原生平滑惯性滚动与隐藏原生滚动条 */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 移动端底栏磨砂玻璃效果 */
+.mobile-tabbar {
+  background: rgba(246, 243, 236, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(226, 218, 203, 0.8);
+}
+
+.mobile-header {
+  background: rgba(246, 243, 236, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 218, 203, 0.8);
 }
